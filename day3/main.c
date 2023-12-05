@@ -30,7 +30,7 @@ typedef struct {
   int x, y;
 } Gear;
 
-int add_gear(Gear **gears) {
+Gear *add_gear(Gear **gears) {
   int index = 0;
   while (gears[index] != NULL) {
     index++;
@@ -42,7 +42,27 @@ int add_gear(Gear **gears) {
   gears[index]->x = 0;
   gears[index]->y = 0;
 
-  return index;
+  return gears[index];
+}
+
+Gear *find_gear(Gear **gears, int x, int y) {
+  int index = 0;
+  while (gears[index] != NULL) {
+    if (gears[index]->x == x && gears[index]->y == y) return gears[index];
+    index++; 
+  }
+  return NULL;
+}
+
+void update_gears(Gear **gears, int x, int y, int *num) {
+  Gear *gear = find_gear(gears, x, y);
+  if (gear == NULL) {
+    gear = add_gear(gears);
+    gear->x = x;
+    gear->y = y;
+  } 
+  gear->ratio *= *num;
+  gear->num_parts++;        
 }
 
 int is_symbol(const char *ch) {
@@ -51,10 +71,12 @@ int is_symbol(const char *ch) {
 
 int is_valid(
   char **lines, 
+  Gear **gears,
   int *line_index, 
   int *digit_index, 
   int *digit_length, 
   int *num_lines, 
+  int *num,
   size_t *line_length) {
 
   int is_top = *line_index == 0;
@@ -62,11 +84,14 @@ int is_valid(
   int is_left = *digit_index == 0;
   int is_right = (*digit_index + *digit_length) == *line_length - 1;
 
+  int valid = 0;
+
   // check directly above digit
   if (!is_top) {
     for (int i = *digit_index; i < *digit_index + *digit_length; i++) {
       const char *ch = &lines[*line_index - 1][i];
-      if (is_symbol(ch)) return 1;
+      if (is_symbol(ch)) valid = 1;
+      if (*ch == '*') update_gears(gears, i, *line_index - 1, num); 
     }    
   } 
 
@@ -74,47 +99,54 @@ int is_valid(
   if (!is_bottom) {
     for (int i = *digit_index; i <*digit_index + *digit_length; i++) {
       const char *ch = &lines[*line_index + 1][i];
-      if (is_symbol(ch)) return 1; 
+      if (is_symbol(ch)) valid = 1;
+      if (*ch == '*') update_gears(gears, i, *line_index + 1, num); 
     }
   } 
 
   // check directly to the left of digit
   if (!is_left) {
     const char *ch = &lines[*line_index][*digit_index - 1];
-    if (is_symbol(ch)) return 1;
+    if (is_symbol(ch)) valid = 1;
+    if (*ch == '*') update_gears(gears, *digit_index - 1, *line_index, num); 
   } 
 
   // check directly to the right of digit
   if (!is_right) {
     const char *ch = &lines[*line_index][*digit_index + *digit_length];
-    if (is_symbol(ch)) return 1;
+    if (is_symbol(ch)) valid = 1;
+    if (*ch == '*') update_gears(gears, *digit_index + *digit_length, *line_index, num); 
   } 
 
   // check top left corner
   if (!is_left && !is_top) {
     const char *ch = &lines[*line_index - 1][*digit_index - 1];
-    if (is_symbol(ch)) return 1;
+    if (is_symbol(ch)) valid = 1;
+    if (*ch == '*') update_gears(gears, *digit_index - 1, *line_index - 1, num); 
   }
 
   // check top right corner
   if (!is_top && !is_right) {
     const char *ch = &lines[*line_index - 1][*digit_index + *digit_length];
-    if (is_symbol(ch)) return 1;
+    if (is_symbol(ch)) valid = 1;
+    if (*ch == '*') update_gears(gears, *digit_index + *digit_length, *line_index - 1, num); 
   }
  
   // check bottom left corner
   if (!is_left && !is_bottom) {
     const char *ch = &lines[*line_index + 1][*digit_index - 1];
-    if (is_symbol(ch)) return 1;
+    if (is_symbol(ch)) valid = 1;
+    if (*ch == '*') update_gears(gears, *digit_index - 1, *line_index + 1, num); 
   }
 
   // check bottom right corner
   if (!is_bottom && !is_right) {
-    const char *ch = &lines[*line_index + 1][*digit_index +*digit_length];
-    if (is_symbol(ch)) return 1;
+    const char *ch = &lines[*line_index + 1][*digit_index + *digit_length];
+    if (is_symbol(ch)) valid = 1;
+    if (*ch == '*') update_gears(gears, *digit_index + *digit_length, *line_index + 1, num); 
   }
 
-  return 0;
+  return valid;
 }
 
 void free_lines(char **lines, int num_lines) {
@@ -132,6 +164,8 @@ int main() {
   size_t line_length = get_line_length(fptr, 300);
 
   int sum = 0;
+  int gear_sum = 0;
+
   Gear **gears = malloc(200 * sizeof(Gear*)); 
   char **lines = malloc(num_lines * sizeof(char*));
   
@@ -154,13 +188,29 @@ int main() {
       int num = strtol(ch, &ch, 10);
       int digit_length = ch - old_ch;
 
-      if (is_valid(lines, &i, &digit_index, &digit_length, &num_lines, &line_length)) sum += num;
+      if (
+        is_valid(
+          lines, 
+          gears, 
+          &i, 
+          &digit_index, 
+          &digit_length, 
+          &num_lines, 
+          &num, 
+          &line_length)
+        ) sum += num;
 
       digit_index += digit_length;
     }
   }
 
-  printf("Sum: %d\n", sum);
+  int index = 0;
+  while (gears[index] != NULL) {
+    if (gears[index]->num_parts == 2) gear_sum += gears[index]->ratio;
+    index++;
+  }
+
+  printf("Sum: %d, Gear sum: %d\n", sum, gear_sum);
 
   // free gears memory
   for (int i = 0; i < 200; i++) {
