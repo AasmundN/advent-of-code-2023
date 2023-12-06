@@ -38,8 +38,10 @@ int main() {
       int num = strtol(ch, &ch, 10);
       if (is_winner(line, num)) matches++;
     }    
+
     if (matches) sum += pow(2, matches - 1);
   }
 
   printf("Sum: %d\n", sum); 
+  fclose(fptr);
 }
