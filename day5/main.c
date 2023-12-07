@@ -54,17 +54,13 @@ Seed **get_seeds(FILE *fptr) {
     
     seeds[seed_index] = malloc(sizeof(Seed)); 
     seeds[seed_index]->value = seed;
+    seeds[seed_index]->destination = seed;
 
     seed_index++;
   }
 
   rewind(fptr);
   return seeds;
-}
-
-int find_destination(unsigned long int source, char *map_line) {
-
-  return 0;
 }
 
 int next_map(FILE *fptr) {
@@ -81,17 +77,43 @@ int next_map(FILE *fptr) {
   return 0;
 }
 
+unsigned long int find_destination(unsigned long int source, char *map_line) {
+  unsigned long int map_values[3 * sizeof(unsigned long int)];  
+  int map_index = 0;
+
+  char *ch = &map_line[0];  
+  while (*ch != '\n') {
+    if (!isdigit(*ch)) {
+      ch++;
+      continue;
+    } 
+
+    map_values[map_index] = strtol(ch, &ch, 10);
+    map_index++;
+  }
+  
+  if (source < map_values[1] || source > map_values[1] + map_values[2] - 1)
+    return 0;  
+
+  return map_values[0] + (source - map_values[1]); 
+}
+
 void find_location(FILE *fptr, Seed *seed) {
   while (next_map(fptr)) {
     char line[300];
 
     while (fgets(line, 300, fptr)) {
       if (!isdigit(line[0])) break;
-      printf("%c\n", line[0]);
+
+      unsigned long int destination = find_destination(seed->destination, line); 
+
+      if (!destination) continue;
+      seed->destination = destination;
+      break;
     } 
   } 
   
-  printf("Finished one seed: %lu\n", seed->value);
+  printf("%lu -> %lu\n", seed->value, seed->destination);
   rewind(fptr);
 } 
 
@@ -99,12 +121,18 @@ int main() {
   FILE *fptr;
   fptr = fopen("input.txt", "r");
 
-  // after get_seeds the file pointer is at the second line
   Seed **seeds = get_seeds(fptr);
   int num_seeds = find_num_seeds(fptr);
 
-  for (int i = 0; i < num_seeds; i++)
+  unsigned long int lowest_location = -1;
+
+  for (int i = 0; i < num_seeds; i++) {
     find_location(fptr, seeds[i]); 
+    if (seeds[i]->destination < lowest_location)
+      lowest_location = seeds[i]->destination;
+  }
+
+  printf("Lowest location: %lu\n", lowest_location);
 
   // free allocated memory
   free(seeds);
