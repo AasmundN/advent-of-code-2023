@@ -119,7 +119,7 @@ void find_location(FILE *fptr, Seed *seed) {
 
 int main() {
   FILE *fptr;
-  fptr = fopen("input.txt", "r");
+  fptr = fopen("../input.txt", "r");
 
   Seed **seeds = get_seeds(fptr);
   int num_seeds = find_num_seeds(fptr);
