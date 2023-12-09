@@ -3,7 +3,6 @@
 #include <stdio.h>
 
 #define NUM_SEED_RANGES 10
-int level = 0;
 
 typedef struct {
   unsigned long int start;
@@ -160,7 +159,6 @@ void reduce_range(Range *range, unsigned long int *lowest_location, FILE *fptr) 
 
   // get next map
   Map **maps = get_next_maps(fptr); 
-  level++;
  
   // reduce range
   Range **reduced_ranges = get_reduced_ranges(range, maps);
@@ -177,7 +175,6 @@ void reduce_range(Range *range, unsigned long int *lowest_location, FILE *fptr) 
 
   // reset file pointer
   fseek(fptr, current_file_location, SEEK_SET);
-  level--;
   
   // free maps memory
   index = 0;
