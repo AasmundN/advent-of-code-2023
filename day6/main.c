@@ -48,20 +48,37 @@ Race **get_races(FILE *fptr) {
   return races;
 }
 
+int find_combinations(Race *race) {
+  int sum = 0;
+
+  for (int i = 1; i < race->time; i++) {
+    int distance = i * (race->time - i);
+    if (distance > race->distance) sum++; 
+  }
+
+  return sum;
+}
+
 int main() {
   FILE *fptr;
   fptr = fopen("input.txt", "r");
 
   Race **races = get_races(fptr);
 
+  int product = 1;
+
   // free races memory
   int index = 0;
   while (races[index] != NULL) {
     printf("Race %d: %d - %d\n", index, races[index]->time, races[index]->distance);
 
+    product *= find_combinations(races[index]);
+
     free(races[index]);
     index++;
   }
+
+  printf("Product: %d", product);
 
   free(races);
 
