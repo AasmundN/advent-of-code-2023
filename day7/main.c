@@ -10,7 +10,7 @@
 #define HAND_SIZE 5
 
 // all available cards
-char cards[] = {"AKQJT98765432"};
+char cards[] = {"AKQT98765432J"};
 
 typedef enum {
   FIVE_OF_A_KIND,
@@ -69,7 +69,9 @@ Hand_t get_hand_type(char *hand) {
   }
 
   int pairs = 0;
-  int tripple = 0;
+  int tripples = 0;
+  int quads = 0;
+  int jokers = card_counters[12];
 
   // find hand type identifiers
   for (int i = 0; i < sizeof(cards) - 1; i++) {
@@ -80,12 +82,11 @@ Hand_t get_hand_type(char *hand) {
         break;
       
       case 4:
-        free(card_counters);
-        return FOUR_OF_A_KIND;
+        quads = 1;
         break;
 
       case 3:
-        tripple = 1;
+        tripples = 1;
         break;
 
       case 2:
@@ -96,11 +97,40 @@ Hand_t get_hand_type(char *hand) {
  
   free(card_counters);
 
-  if (pairs == 1 && tripple == 1) return FULL_HOUSE;
-  else if (tripple == 1) return THREE_OF_A_KIND;
+  // this here is ugly af
+
+  // all ways of getting five
+  if (quads && jokers == 1) return FIVE_OF_A_KIND;
+  else if (tripples && jokers == 2) return FIVE_OF_A_KIND;
+  else if (pairs == 1 && jokers == 3) return FIVE_OF_A_KIND;
+  else if (jokers == 4) return FIVE_OF_A_KIND;
+
+  // all ways of gettings four
+  else if (quads) return FOUR_OF_A_KIND;
+  else if (tripples && jokers == 1) return FOUR_OF_A_KIND;
+  else if (pairs == 2 && jokers == 2) return FOUR_OF_A_KIND;
+  else if (jokers == 3) return FOUR_OF_A_KIND;
+
+  // all ways of getting full house
+  else if (tripples && pairs) return FULL_HOUSE;
+  else if (pairs == 2 && jokers == 1) return FULL_HOUSE;
+  else if (pairs == 2 && jokers == 2) return FULL_HOUSE;
+
+  // all ways of getting three
+  else if (tripples) return THREE_OF_A_KIND;
+  else if (pairs && jokers) return THREE_OF_A_KIND;
+  else if (jokers == 2) return THREE_OF_A_KIND;
+
+  // all ways of gettings two pairs
   else if (pairs == 2) return TWO_PAIR;
-  else if (pairs == 1) return ONE_PAIR;
-  else return HIGH_CARD; 
+  else if (pairs && jokers) return TWO_PAIR;
+
+  // all ways of getting one pair
+  else if (pairs) return ONE_PAIR;
+  else if (jokers) return ONE_PAIR;
+ 
+  // if no jokers return high card
+  else return HIGH_CARD;
 }
 
 // return true if hand one is better than hand two
