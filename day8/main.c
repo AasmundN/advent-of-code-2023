@@ -78,7 +78,7 @@ int find(Node **nodes, char *node) {
   return index;
 }
 
-int get_loop_size(Node **nodes, int num_nodes, char *directions, int starting_node) {
+int get_loop_size(Node **nodes, char *directions, int starting_node) {
   int steps = 0;
 
   int direction_index = 0;
@@ -94,7 +94,6 @@ int get_loop_size(Node **nodes, int num_nodes, char *directions, int starting_no
     else
       strncpy(next_node, nodes[node_index]->left, 3);
 
-    // node_index = find_node(nodes, next_node, 0, num_nodes); 
     node_index = find(nodes, next_node);
 
     if (directions[direction_index + 1] == '\n') direction_index = 0;
@@ -146,7 +145,7 @@ int main() {
 
   int index = 0;
   while (starting_nodes[index] != -1) {
-    loop_sizes[index] = get_loop_size(nodes, num_nodes, directions, starting_nodes[index]); 
+    loop_sizes[index] = get_loop_size(nodes, directions, starting_nodes[index]); 
     printf("%s: %d\n", nodes[starting_nodes[index]]->el, loop_sizes[index]);
     index++;
   }  
