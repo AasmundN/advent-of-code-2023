@@ -38,7 +38,7 @@ int **get_histories(char *file) {
   return histories;
 }
 
-int predict_value(int *history) {
+int *reduce_history(int *history) {
   int length = history[0];
   int *reduced_history = malloc((length - 1) * sizeof(int));
   reduced_history[0] = length - 1;
@@ -50,13 +50,36 @@ int predict_value(int *history) {
     if (reduced_history[i - 1]) all_zeros = false;
   }
 
-  int predicted_value = all_zeros
+  if (!all_zeros) return reduced_history;
+ 
+  free(reduced_history);
+  return NULL;
+}
+
+int next_value(int *history) {
+  int length = history[0];
+  int *reduced_history = reduce_history(history);
+
+  int value = reduced_history == NULL
     ? 0
-    : reduced_history[length - 2] + predict_value(reduced_history); 
+    : reduced_history[length - 2] + next_value(reduced_history); 
 
   free(reduced_history);
 
-  return predicted_value;
+  return value;
+}
+
+int prev_value(int *history) {
+  int length = history[0];
+  int *reduced_history = reduce_history(history);
+
+  int value = reduced_history == NULL
+    ? 0
+    : reduced_history[1] - prev_value(reduced_history);
+  
+  free(reduced_history);
+
+  return value; 
 }
 
 void free_histories(int **histories) {
@@ -71,16 +94,17 @@ void free_histories(int **histories) {
 int main() {
   int **histories = get_histories("input.txt");
 
-  int sum = 0;
+  int next = 0, prev = 0;
 
   int index = 0; 
   while (histories[index] != NULL) {
     int length = histories[index][0];
-    sum += predict_value(histories[index]) + histories[index][length - 1];
+    next += next_value(histories[index]) + histories[index][length - 1];
+    prev += histories[index][1] - prev_value(histories[index]); 
     index++;
   }
 
-  printf("Sum: %d\n", sum);
+  printf("Next: %d, Prev: %d\n", next, prev);
 
   // free histories
   free_histories(histories);
