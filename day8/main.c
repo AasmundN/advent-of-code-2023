@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <math.h>
+#include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -47,16 +49,85 @@ Node **get_nodes(FILE *fptr) {
   return nodes;
 }
 
-int get_node(Node **nodes, char *node) {
-  int node_index = 0;
+int *get_starting_nodes(Node **nodes) {
+  int *starting_nodes = malloc(MAX_NODES * sizeof(int));
 
-  // find node
+  int node_index = 0;
+  int starting_node_index = 0;
+
+  // find starting nodes 
   while (nodes[node_index] != NULL) {
-    if (!strcmp(node, nodes[node_index]->el)) break;
+    if (nodes[node_index]->el[2] == 'A') { 
+      starting_nodes[starting_node_index] = node_index;
+      starting_node_index++;
+    }
+
     node_index++;
   }
 
-  return node_index;
+  starting_nodes = realloc(starting_nodes, (starting_node_index + 1) * sizeof(int));
+  starting_nodes[starting_node_index] = -1;
+
+  return starting_nodes;
+}
+
+int find(Node **nodes, char *node) {
+  int index = 0;
+  while(strcmp(nodes[index]->el, node)) index++;  
+
+  return index;
+}
+
+int get_loop_size(Node **nodes, int num_nodes, char *directions, int starting_node) {
+  int steps = 0;
+
+  int direction_index = 0;
+  int node_index = starting_node;
+
+  while (true) {
+    if (nodes[node_index]->el[2] == 'Z') break;
+
+    char next_node[4] = {'\0'};
+
+    if (directions[direction_index] == 'R')
+      strncpy(next_node, nodes[node_index]->right, 3);
+    else
+      strncpy(next_node, nodes[node_index]->left, 3);
+
+    // node_index = find_node(nodes, next_node, 0, num_nodes); 
+    node_index = find(nodes, next_node);
+
+    if (directions[direction_index + 1] == '\n') direction_index = 0;
+    else direction_index++;
+
+    steps++;
+  }  
+
+  return steps;
+}
+
+unsigned long long int gcd(unsigned long long int a, unsigned long long int b) {
+  unsigned long long int temp;
+  while (b != 0) {
+    temp = a % b;
+
+    a = b;
+    b = temp;
+  }
+
+  return a;
+}
+
+unsigned long long int lcm(unsigned long long int a, unsigned long long int b) {
+  return (a * b) / gcd(a, b);
+}
+
+unsigned long long int lcm_array(int *args, size_t size) {
+  unsigned long long int temp = args[0]; 
+
+  for (int i = 1; i < size; i++) temp = lcm(temp, args[i]);
+
+  return temp;
 }
 
 int main() {
@@ -66,45 +137,34 @@ int main() {
   char *directions = get_directions(fptr);
   Node **nodes = get_nodes(fptr);
 
-  int steps = 0;
-  int direction_index = 0;
-  int node_index = get_node(nodes, "AAA");
+  int num_nodes = 0;
+  while (nodes[num_nodes] != NULL) num_nodes++;
 
-  while (strcmp(nodes[node_index]->el, "ZZZ")) {
-    char direction = directions[direction_index];
-    char next_node[4] = {'\0'};
+  int *starting_nodes = get_starting_nodes(nodes);
 
-    switch (direction) {
-      case 'L':
-        strncpy(next_node, nodes[node_index]->left, 3);
-        break;
+  int *loop_sizes = malloc(10 * sizeof(int)); 
 
-      case 'R':
-        strncpy(next_node, nodes[node_index]->right, 3);
-        break;
-    }
+  int index = 0;
+  while (starting_nodes[index] != -1) {
+    loop_sizes[index] = get_loop_size(nodes, num_nodes, directions, starting_nodes[index]); 
+    printf("%s: %d\n", nodes[starting_nodes[index]]->el, loop_sizes[index]);
+    index++;
+  }  
 
-    node_index = get_node(nodes, next_node); 
-    
-    if (directions[direction_index + 1] == '\n') direction_index = 0;
-    else direction_index++;
-
-    steps++;
-  }
-
-  printf("Steps: %d\n", steps);
+  printf("%llu\n", lcm_array(loop_sizes, index));
 
   // free nodes memory
-  node_index = 0;
+  int node_index = 0;
   while (nodes[node_index] != NULL) {
     free(nodes[node_index]);
     node_index++;
   }
 
+  free(loop_sizes);
   free(nodes);
   free(directions);
-  
+
   fclose(fptr);
-  
+
   return 0;
 }
