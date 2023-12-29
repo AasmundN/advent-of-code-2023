@@ -7,14 +7,14 @@
 #define MAX_PAIRS 1000 
 
 typedef struct {
-  int row, column;
+  long int row, column;
 } Galaxy;
 
 typedef struct {
-  int first, second;
+  long int first, second;
 } Pair;
 
-bool check_column(FILE *fptr, int column) {
+bool check_column(FILE *fptr, long int column) {
   long int offset = ftell(fptr);
   rewind(fptr);
 
@@ -38,19 +38,19 @@ Galaxy **get_galaxies(char *file) {
   Galaxy **galaxies = malloc(MAX_GALAXIES * sizeof(Galaxy*));
 
   char line[MAX_LINE_LENGTH];
-  int row = 0;
-  int galaxy_index = 0;
+  long int row = 0;
+  long int galaxy_index = 0;
 
   while (fgets(line, MAX_LINE_LENGTH, fptr)) {
-    int column = 0; 
-    int index = 0;
+    long int column = 0; 
+    long int index = 0;
 
     bool no_galaxies = true;
     
     while (line[index] != '\n') {
       if (line[index] == '.') {
         check_column(fptr, index)
-          ? column += 2
+          ? column += 1000000
           : column++;  
       } else {
         galaxies[galaxy_index] = malloc(sizeof(Galaxy));
@@ -68,7 +68,7 @@ Galaxy **get_galaxies(char *file) {
     }
 
     no_galaxies
-      ? row += 2
+      ? row += 1000000
       : row++;
   }
 
@@ -80,7 +80,7 @@ Galaxy **get_galaxies(char *file) {
 }
 
 void free_galaxies(Galaxy **galaxies) {
-  int index = 0;
+  long int index = 0;
   while (galaxies[index] != NULL) {
     free(galaxies[index]);
     index++;
@@ -89,15 +89,15 @@ void free_galaxies(Galaxy **galaxies) {
   free(galaxies);
 }
 
-int find_distance(Galaxy *one, Galaxy *two) {
-  int horizontal = abs(one->column - two->column);
-  int vertical = abs(one->row - two->row);
+long int find_distance(Galaxy *one, Galaxy *two) {
+  long int horizontal = labs(one->column - two->column);
+  long int vertical = labs(one->row - two->row);
 
   return horizontal + vertical;
 }
 
-bool find_pair(Pair *pairs, int first, int second, int pair_index) {
-  for (int i = 0; i < pair_index; i++) {
+bool find_pair(Pair *pairs, long int first, long int second, long int pair_index) {
+  for (long int i = 0; i < pair_index; i++) {
     if ((first == pairs[i].first && second == pairs[i].second) 
       || (second == pairs[i].first && first == pairs[i].second))
       return true;
@@ -109,15 +109,15 @@ bool find_pair(Pair *pairs, int first, int second, int pair_index) {
 int main() {
   Galaxy **galaxies = get_galaxies("input.txt");
 
-  int sum = 0;
+  long int sum = 0;
  
   Pair *pairs = calloc(MAX_PAIRS, sizeof(Pair));
-  int pair_index = 0;
+  long int pair_index = 0;
 
-  int first = 0;
+  long int first = 0;
 
   while (galaxies[first] != NULL) {
-    int second = 0;
+    long int second = 0;
     
     while (galaxies[second] != NULL) {
       Pair pair = {first, second};
@@ -135,9 +135,9 @@ int main() {
     first++;
   }
 
-  printf("%d\n", pair_index);
+  printf("%ld\n", pair_index);
 
-  printf("Sum: %d\n", sum);
+  printf("Sum: %ld\n", sum);
 
   free(pairs);
   free_galaxies(galaxies);
